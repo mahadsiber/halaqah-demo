@@ -6,7 +6,7 @@ Assalamu'alaikum warahmatullahi wabarakatuh,
 
 Alhamdulillahi rabbil 'alamin, wash shalatu was salamu 'ala asrofil anbiya'i wal mursalin, wa 'ala alihi wa shohbihi ajma'in. Amma ba'du.
 
-Selamat datang di Halaqah Syumuliyah Islamiyah, sebuah majlis ta'lim digital yang menghimpun hikmah dan ilmu dari dua tokoh agung dalam khazanah Islam: Fakhruddin Razi dan Sunan Bonang. Semoga panduan ini bermanfaat dalam memudahkan ikhwan-akhwat sekalian menggunakan platform ini dengan sebaik-baiknya.
+Selamat datang di Halaqah Syumuliyah Islamiyah, sebuah majlis ta'lim digital yang menghimpun hikmah dan ilmu dari dua tokoh agung dalam khazanah Islam: Fakhruddin Razi dan Sunan Bonang. Semoga panduan ini bermanfaat dalam memudahkan Anda sekalian menggunakan platform ini dengan sebaik-baiknya.
 
 ## Daftar Isi
 
@@ -76,10 +76,9 @@ c. **Survei Kepuasan**:
 
 Dalam menggunakan platform ini, mohon perhatikan hal-hal berikut:
 
-a. Ajukan pertanyaan dengan adab yang baik, sebagaimana layaknya seorang santri bertanya kepada kiai.
-b. Hormati pandangan yang disampaikan oleh kedua tokoh dengan prinsip "sami'na wa atha'na".
-c. Gunakan platform ini untuk tabayyun, menambah ilmu, dan memperluas wawasan keislaman.
-d. Hindari pertanyaan yang bersifat khilafiyah atau menyinggung sensitivitas madzhab.
+a. Mohon ajukan pertanyaan yang sekiranya relevan, utamanya dengan kandungan Tafsir Al-Kabir (Ar Razi) dan Het Boek van Bonang (Sunan Bonang).
+b. Gunakan platform ini untuk tabayyun, menambah ilmu, dan memperluas wawasan keislaman.
+c. Isi/konten berupa pandangan dan komentar yang disajikan di platform ini adalah sekadar referensi yang tidak boleh dianggap benar atau shahih tanpa tashih dari Ulama.
 
 ### 6. Dukungan Teknis
 
