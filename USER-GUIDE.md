@@ -38,7 +38,7 @@ b. **Menggunakan Fitur Suara** (ikhtiari):
 - Jika ingin menggunakan suara, tekan tombol "Gunakan Suara".
 - Ucapkan pertanyaan dengan jelas dan tartil.
 
-### 3. Memahami Jawaban Para Kiai
+### 3. Memahami Jawaban AI
 
 Setelah pertanyaan diajukan, Anda akan menerima jawaban dari kedua tokoh:
 
