@@ -5,3 +5,4 @@ google-cloud-speech
 openai
 pinecone-client
 requests
+python-dotenv

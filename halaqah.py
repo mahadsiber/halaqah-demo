@@ -9,19 +9,26 @@ import json
 import openai
 import pinecone
 import requests
+from dotenv import load_dotenv
+import logging
+import functools
 
-# Inisialisasi Google Cloud API
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "path_to_your_credentials.json"
+# Load environment variables
+load_dotenv()
 
-# Inisialisasi OpenAI API
-openai.api_key = "your_openai_api_key"
+# Initialize Google Cloud API
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
-# Inisialisasi Pinecone
-pinecone.init(api_key="your_pinecone_api_key", environment="your_pinecone_environment")
+# Initialize OpenAI API
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Initialize Pinecone
+pinecone.init(api_key=os.getenv("PINECONE_API_KEY"), environment=os.getenv("PINECONE_ENVIRONMENT"))
 index_razi = pinecone.Index("razi")
 index_bonang = pinecone.Index("bonang")
 
-# Fungsi untuk mengubah suara menjadi teks
+# Function to convert speech to text
+@st.cache
 def speech_to_text():
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
@@ -35,7 +42,8 @@ def speech_to_text():
     except sr.RequestError:
         return "Gagal meminta hasil dari Google Speech Recognition"
 
-# Fungsi untuk mengubah teks menjadi suara
+# Function to convert text to speech
+@st.cache(allow_output_mutation=True)
 def text_to_speech(text, voice_name="id-ID-Wavenet-B"):
     client = texttospeech.TextToSpeechClient()
     synthesis_input = texttospeech.SynthesisInput(text=text)
@@ -51,70 +59,75 @@ def text_to_speech(text, voice_name="id-ID-Wavenet-B"):
     )
     return response.audio_content
 
-# Fungsi untuk mendapatkan data terkait dari Pinecone
+# Function to get relevant data from Pinecone
+@st.cache(allow_output_mutation=True)
 def get_relevant_data(query, index):
-    # Mengubah query menjadi vektor embedding
     query_embedding = openai.Embedding.create(input=query, model="text-embedding-ada-002")['data'][0]['embedding']
-    
-    # Mengambil data terkait dari Pinecone
     results = index.query(queries=[query_embedding], top_k=5)
-    
-    # Mengembalikan data terkait
     return [result['id'] for result in results['results'][0]['matches']]
 
-# Fungsi untuk mendapatkan respons dari agen
+# Function to get agent response
+@st.cache(allow_output_mutation=True)
 def get_agent_response(query, agent_name):
     if agent_name == "Razi":
-        # Mengambil data terkait dari Pinecone
-        relevant_data = get_relevant_data(query, index_razi)
-        
-        # Prompt untuk Razi
-        prompt = (
-            f"Anda adalah Fakhruddin Razi, seorang ulama dan filsuf Islam yang terkenal dengan karyanya 'Tafsir Al-Kabir.' Berikan pandangan awal Anda terhadap pertanyaan berikut:\n"
-            f"Pertanyaan: {query}\n"
-            f"Data Relevan: {relevant_data}\n"
-            f"Pandangan Razi:"
-        )
-        response = openai.Completion.create(
-            engine="gpt-4",
-            prompt=prompt,
-            max_tokens=200
-        )
-        return response.choices[0].text.strip()
-    elif agent_name == "Bonang":
-        # Mengambil data terkait dari Pinecone
-        relevant_data = get_relevant_data(query, index_bonang)
-        
-        # Prompt untuk Bonang
-        prompt = (
-            f"Anda adalah Sunan Bonang, salah satu dari Wali Songo yang terkenal dengan karyanya 'Het Boek Van Bonang.' Berikan pandangan awal Anda terhadap pertanyaan berikut:\n"
-            f"Pertanyaan: {query}\n"
-            f"Data Relevan: {relevant_data}\n"
-            f"Pandangan Bonang:"
-        )
-        response = openai.Completion.create(
-            engine="gpt-4",
-            prompt=prompt,
-            max_tokens=200
-        )
-        return response.choices[0].text.strip()
-    elif agent_name == "Claude Sonnet 3.5":
-        # Logika untuk mendapatkan topik dari Claude Sonnet 3.5
-        response = openai.Completion.create(
-            engine="gpt-4",
-            prompt=f"Topik: {query}",
-            max_tokens=5
-        )
-        return response.choices[0].text.strip()
+        prompt = f"""
+Anda adalah Fakhruddin Razi, ulama dan filsuf Islam ternama dari abad ke-12.
+Berikan pandangan Anda terhadap pertanyaan berikut dengan memperhatikan hal-hal ini:
+1. Gunakan bahasa yang sopan, formal, dan mencerminkan kearifan seorang ulama.
+2. Berikan analisis mendalam berdasarkan prinsip-prinsip Islam dan filsafat.
+3. Kutip atau rujuk Al-Qur'an, Hadits, atau karya-karya klasik Islam jika relevan.
+4. Hindari pernyataan kontroversial atau yang dapat menyinggung sensitivitas keagamaan.
 
-# Fungsi untuk menampilkan teks secara stream
+Pertanyaan: {query}
+
+Pandangan Razi (dalam 150-200 kata):
+"""
+    elif agent_name == "Bonang":
+        prompt = f"""
+Anda adalah Sunan Bonang, salah satu Wali Songo yang menyebarkan Islam di Jawa pada abad ke-15.
+Berikan pandangan Anda terhadap pertanyaan berikut dengan memperhatikan hal-hal ini:
+1. Gunakan bahasa yang sopan, bijaksana, dan mencerminkan kearifan Jawa-Islam.
+2. Berikan perspektif yang menyeimbangkan antara ajaran Islam dan kearifan lokal.
+3. Gunakan analogi atau perumpamaan yang mudah dipahami jika memungkinkan.
+4. Tekankan pada aspek praktis dan relevansi dengan kehidupan sehari-hari.
+
+Pertanyaan: {query}
+
+Pandangan Bonang (dalam 150-200 kata):
+"""
+    
+    response = openai.Completion.create(
+        engine="gpt-4o",
+        prompt=prompt,
+        max_tokens=250,
+        temperature=0.7
+    )
+    return response.choices[0].text.strip()
+
+# Function to get agent comment
+@st.cache(allow_output_mutation=True)
+def get_agent_comment(context_file, agent_name, round_number):
+    with open(context_file, "r") as file:
+        context = json.load(file)
+    if agent_name == "Razi":
+        prompt = f"Anda adalah Fakhruddin Razi. Berikan komentar yang koheren dan dialektis terhadap pandangan Sunan Bonang, mempertimbangkan seluruh konteks percakapan. Fokus pada aspek yang dapat memperdalam diskusi. Pandangan Bonang: {context['bonang_response']}\n"
+    elif agent_name == "Bonang":
+        prompt = f"Anda adalah Sunan Bonang. Berikan komentar yang koheren dan dialektis terhadap pandangan Fakhruddin Razi, mempertimbangkan seluruh konteks percakapan. Fokus pada aspek yang dapat memperdalam diskusi. Pandangan Razi: {context['razi_response']}\n"
+    if round_number > 1:
+        prompt += f"Komentar sebelumnya Anda: {context[f'{agent_name.lower()}_comments'][round_number-2]}\nKomentar terakhir lawan bicara: {context[f'{'bonang' if agent_name == 'Razi' else 'razi'}_comments'][round_number-2]}\n"
+    prompt += f"Berikan komentar {agent_name} yang produktif dan memajukan diskusi (100-150 kata):"
+    response = openai.Completion.create(engine="gpt-4o", prompt=prompt, max_tokens=200, temperature=0.7)
+    return response.choices[0].text.strip()
+
+# Function to stream text
 def stream_text(text, audio_content):
+    placeholder = st.empty()
     for char in text:
-        st.write(char, end='', flush=True)
+        placeholder.write(char, end='', flush=True)
         time.sleep(0.05)
     st.audio(audio_content, format='audio/mp3')
 
-# Fungsi untuk menyimpan konteks percakapan
+# Function to save conversation context
 def save_conversation_context(query, razi_response, bonang_response, razi_comments, bonang_comments, filename="conversation.json"):
     context = {
         "query": query,
@@ -126,48 +139,33 @@ def save_conversation_context(query, razi_response, bonang_response, razi_commen
     with open(filename, "w") as file:
         json.dump(context, file)
 
-# Fungsi untuk mendapatkan komentar dari agen
-def get_agent_comment(context_file, agent_name, round_number):
-    with open(context_file, "r") as file:
-        context = json.load(file)
-    if agent_name == "Razi":
-        # Prompt untuk Razi
-        prompt = (
-            f"Anda adalah Fakhruddin Razi, seorang ulama dan filsuf Islam yang terkenal dengan karyanya 'Tafsir Al-Kabir.' Berikan komentar Anda terhadap pandangan Sunan Bonang berikut:\n"
-            f"Pandangan Bonang: {context['bonang_response']}\n"
-            f"Komentar Razi:"
-        )
-        if round_number > 1:
-            prompt += f"\nKomentar sebelumnya dari Razi: {context['razi_comments'][round_number-2]}\n"
-            prompt += f"Komentar sebelumnya dari Bonang: {context['bonang_comments'][round_number-2]}\n"
-        response = openai.Completion.create(
-            engine="gpt-4",
-            prompt=prompt,
-            max_tokens=200
-        )
-        return response.choices[0].text.strip()
-    elif agent_name == "Bonang":
-        # Prompt untuk Bonang
-        prompt = (
-            f"Anda adalah Sunan Bonang, salah satu dari Wali Songo yang terkenal dengan karyanya 'Het Boek Van Bonang.' Berikan komentar Anda terhadap pandangan Fakhruddin Razi berikut:\n"
-            f"Pandangan Razi: {context['razi_response']}\n"
-            f"Komentar Bonang:"
-        )
-        if round_number > 1:
-            prompt += f"\nKomentar sebelumnya dari Bonang: {context['bonang_comments'][round_number-2]}\n"
-            prompt += f"Komentar sebelumnya dari Razi: {context['razi_comments'][round_number-2]}\n"
-        response = openai.Completion.create(
-            engine="gpt-4",
-            prompt=prompt,
-            max_tokens=200
-        )
-        return response.choices[0].text.strip()
+# Error handling decorator
+def handle_errors(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            st.error("Mohon maaf, terjadi kendala teknis. Tim kami sedang berusaha menyelesaikannya. Silakan coba lagi nanti.")
+            logging.error(f"Error in {func.__name__}: {str(e)}")
+            return ""
+    return wrapper
+
+# Polite error message
+def get_polite_error_message(error_type):
+    messages = {
+        "network": "Mohon maaf, terjadi kendala koneksi. Silakan periksa koneksi internet Anda dan coba lagi.",
+        "timeout": "Mohon maaf, proses membutuhkan waktu lebih lama dari yang diharapkan. Silakan coba lagi nanti.",
+        "not_found": "Mohon maaf, informasi yang Anda cari tidak ditemukan. Silakan coba dengan kata kunci lain.",
+        "default": "Mohon maaf, terjadi kendala teknis. Tim kami sedang berusaha menyelesaikannya. Silakan coba lagi nanti."
+    }
+    return messages.get(error_type, messages["default"])
 
 # Streamlit App
 st.title("Halaqah Syumuliyah Islamiyah")
 
 # Input User
-user_input = st.text_input("Masukkan pertanyaan:")
+user_input = st.text_area("Masukkan pertanyaan:")
 if st.button("Diskusikan"):
     query = user_input
 elif st.button("Gunakan Suara"):
@@ -185,11 +183,11 @@ bonang_response = get_agent_response(query, "Bonang")
 # Tampilkan Pandangan Agen
 st.write("Pandangan Razi:")
 razi_audio = text_to_speech(razi_response, voice_name="id-ID-Wavenet-B")
-threading.Thread(target=stream_text, args=(razi_response, razi_audio)).start()
+stream_text(razi_response, razi_audio)
 
 st.write("Pandangan Bonang:")
 bonang_audio = text_to_speech(bonang_response, voice_name="id-ID-Wavenet-C")
-threading.Thread(target=stream_text, args=(bonang_response, bonang_audio)).start()
+stream_text(bonang_response, bonang_audio)
 
 # Simpan Konteks Percakapan
 razi_comments = []
@@ -204,11 +202,11 @@ bonang_comments.append(bonang_comment_1)
 # Tampilkan Komentar Putaran Pertama
 st.write("Komentar Razi (Putaran 1):")
 razi_comment_1_audio = text_to_speech(razi_comment_1, voice_name="id-ID-Wavenet-B")
-threading.Thread(target=stream_text, args=(razi_comment_1, razi_comment_1_audio)).start()
+stream_text(razi_comment_1, razi_comment_1_audio)
 
 st.write("Komentar Bonang (Putaran 1):")
 bonang_comment_1_audio = text_to_speech(bonang_comment_1, voice_name="id-ID-Wavenet-C")
-threading.Thread(target=stream_text, args=(bonang_comment_1, bonang_comment_1_audio)).start()
+stream_text(bonang_comment_1, bonang_comment_1_audio)
 
 # Putaran Kedua
 razi_comment_2 = get_agent_comment("conversation.json", "Razi", 2)
@@ -219,11 +217,11 @@ bonang_comments.append(bonang_comment_2)
 # Tampilkan Komentar Putaran Kedua
 st.write("Komentar Razi (Putaran 2):")
 razi_comment_2_audio = text_to_speech(razi_comment_2, voice_name="id-ID-Wavenet-B")
-threading.Thread(target=stream_text, args=(razi_comment_2, razi_comment_2_audio)).start()
+stream_text(razi_comment_2, razi_comment_2_audio)
 
 st.write("Komentar Bonang (Putaran 2):")
 bonang_comment_2_audio = text_to_speech(bonang_comment_2, voice_name="id-ID-Wavenet-C")
-threading.Thread(target=stream_text, args=(bonang_comment_2, bonang_comment_2_audio)).start()
+stream_text(bonang_comment_2, bonang_comment_2_audio)
 
 # Putaran Ketiga
 razi_comment_3 = get_agent_comment("conversation.json", "Razi", 3)
@@ -234,11 +232,11 @@ bonang_comments.append(bonang_comment_3)
 # Tampilkan Komentar Putaran Ketiga
 st.write("Komentar Razi (Putaran 3):")
 razi_comment_3_audio = text_to_speech(razi_comment_3, voice_name="id-ID-Wavenet-B")
-threading.Thread(target=stream_text, args=(razi_comment_3, razi_comment_3_audio)).start()
+stream_text(razi_comment_3, razi_comment_3_audio)
 
 st.write("Komentar Bonang (Putaran 3):")
 bonang_comment_3_audio = text_to_speech(bonang_comment_3, voice_name="id-ID-Wavenet-C")
-threading.Thread(target=stream_text, args=(bonang_comment_3, bonang_comment_3_audio)).start()
+stream_text(bonang_comment_3, bonang_comment_3_audio)
 
 # Simpan Konteks Percakapan
 save_conversation_context(query, razi_response, bonang_response, razi_comments, bonang_comments)
@@ -251,7 +249,7 @@ if st.sidebar.button("Lihat Riwayat"):
     st.sidebar.json(history)
 
 st.sidebar.header("Bantuan")
-st.sidebar.write("Butuh bantuan? Hubungi kami di support@example.com")
+st.sidebar.write("Butuh bantuan? Hubungi kami di dukungan@mahadsiber.my.id")
 
 st.sidebar.header("Survei Kepuasan")
 st.sidebar.write("Berikan umpan balik Anda di sini: [Link Survei]")
