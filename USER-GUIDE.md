@@ -1,4 +1,4 @@
-8# Panduan Pengguna Halaqah Syumuliyah Islamiyah
+# Panduan Pengguna Halaqah Syumuliyah Islamiyah
 
 Bismillahirrahmanirrahim,
 
