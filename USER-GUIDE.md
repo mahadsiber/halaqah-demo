@@ -77,7 +77,9 @@ c. **Survei Kepuasan**:
 Dalam menggunakan platform ini, mohon perhatikan hal-hal berikut:
 
 a. Mohon ajukan pertanyaan yang sekiranya relevan, utamanya dengan kandungan Tafsir Al-Kabir (Ar Razi) dan Het Boek van Bonang (Sunan Bonang).
+
 b. Gunakan platform ini untuk tabayyun, menambah ilmu, dan memperluas wawasan keislaman.
+
 c. Isi/konten berupa pandangan dan komentar yang disajikan di platform ini adalah sekadar referensi yang tidak boleh dianggap benar atau shahih tanpa tashih dari Ulama.
 
 ### 6. Dukungan Teknis
