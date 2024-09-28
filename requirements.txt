@@ -1,0 +1,7 @@
+streamlit
+speechrecognition
+google-cloud-texttospeech
+google-cloud-speech
+openai
+pinecone-client
+requests
