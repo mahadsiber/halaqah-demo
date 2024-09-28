@@ -1,4 +1,4 @@
-# Panduan Pengguna Halaqah Syumuliyah Islamiyah
+8# Panduan Pengguna Halaqah Syumuliyah Islamiyah
 
 Bismillahirrahmanirrahim,
 
@@ -70,7 +70,7 @@ b. **Memulai Bahtsul Masa'il Baru**:
 
 c. **Survei Kepuasan**:
 
-- Kami sangat mengharapkan masukan dari ikhwan-akhwat sekalian. Mohon berkenan mengisi survei yang tersedia di samping layar.
+- Kami sangat mengharapkan masukan dari Anda sekalian. Mohon berkenan mengisi survei yang tersedia di samping layar.
 
 ### 5. Adab dan Etika Penggunaan
 
